@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+import { prisma } from "@/database/prisma";
 import { z } from "zod";
+import { AppError } from "@/utils/AppError";
 
 const CategoriesEnum = z.enum([
   "food",
@@ -23,7 +25,21 @@ class RefundsController {
 
     const { name, category, amount, filename } = bodySchema.parse(req.body);
 
-    res.json({ message: "hello moto" });
+    if (!req.user?.id) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const refund = await prisma.refunds.create({
+      data: {
+        name,
+        category,
+        amount,
+        filename,
+        userId: req.user.id,
+      },
+    });
+
+    res.status(201).json(refund);
   }
 }
 
